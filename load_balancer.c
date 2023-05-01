@@ -32,6 +32,8 @@ load_balancer_t *init_load_balancer() {
     return ld_bal;
 }
 
+// void add_
+
 void loader_add_server(load_balancer_t *main, int server_id) {
     /* TODO 2 */
 }

@@ -4,29 +4,51 @@
 
 #include "server.h"
 
-struct server_memory {
-	/* TODO 0 */
-}
-
-server_memory *init_server_memory()
+server_memory_t *init_server_memory()
 {
-	/* TODO 1 */
-	return NULL;
+	server_memory_t *srv = calloc(1, sizeof(server_memory_t));
+	DIE(!srv, "srv calloc failed in init_server_memory()\n");
+
+	srv->ht = ht_create(HMAX, hash_function_string, compare_function_strings, key_val_free_function);
+
+	return srv;
 }
 
-void server_store(server_memory *server, char *key, char *value) {
-	/* TODO 2 */
+void server_store(server_memory_t *server, char *key, char *value) {
+	if (!server)
+		return;
+
+	unsigned int key_len = strlen(key) + 1;
+	unsigned int val_len = strlen(value) + 1;
+	ht_put(server->ht, key, key_len, value, val_len);
 }
 
-char *server_retrieve(server_memory *server, char *key) {
-	/* TODO 3 */
-	return NULL;
+char *server_retrieve(server_memory_t *server, char *key) {
+	if (!server)
+		return NULL;
+
+	char *retrieved_data = ht_get(server->ht, key);
+	//(char *)ht_get(server->ht, key);
+
+	return retrieved_data;
 }
 
-void server_remove(server_memory *server, char *key) {
-	/* TODO 4 */
+void server_remove(server_memory_t *server, char *key) {
+	if (!server)
+		return;
+
+	ht_remove_entry(server->ht, key);
 }
 
-void free_server_memory(server_memory *server) {
-	/* TODO 5 */
+void free_server_memory(server_memory_t *server) {
+	if (!server || !server->ht) {
+		if (!server->ht)
+			free(server);
+		
+		return;
+	}
+
+	ht_free(server->ht);
+
+	free(server);
 }

@@ -52,7 +52,7 @@ void apply_requests(FILE* input_file) {
 	char request[REQUEST_LENGTH] = {0};
 	char key[KEY_LENGTH] = {0};
 	char value[VALUE_LENGTH] = {0};
-	load_balancer* main_server = init_load_balancer();
+	load_balancer_t* main_server = init_load_balancer();
 
 	while (fgets(request, REQUEST_LENGTH, input_file)) {
 		request[strlen(request) - 1] = 0;

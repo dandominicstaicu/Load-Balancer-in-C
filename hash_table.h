@@ -6,6 +6,9 @@
 
 #include "linked_list.h"
 
+#define HMAX 10
+#define MAX_STRING_SIZE 256 //??
+
 typedef struct info info;
 struct info {
 	void *key;

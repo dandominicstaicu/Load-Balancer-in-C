@@ -2,10 +2,20 @@
 #ifndef LOAD_BALANCER_H_
 #define LOAD_BALANCER_H_
 
-#include "server.h"
+#include <stdlib.h>
+#include <string.h>
 
-struct load_balancer;
-typedef struct load_balancer load_balancer;
+#include "server.h"
+#include "linked_list.h"
+
+struct load_balancer_t;
+typedef struct load_balancer_t load_balancer_t;
+
+struct load_balancer_t {
+    linked_list_t *ring;
+	unsigned int (* server_hash)(void *);
+	unsigned int (* key_hash)(void *);
+};
 
 /**
  * init_load_balancer() - initializes the memory for a new load balancer and its fields and
@@ -13,7 +23,7 @@ typedef struct load_balancer load_balancer;
  *
  * Return: pointer to the load balancer struct
  */
-load_balancer *init_load_balancer();
+load_balancer_t *init_load_balancer();
 
 /**
  * free_load_balancer() - frees the memory of every field that is related to the
@@ -21,7 +31,7 @@ load_balancer *init_load_balancer();
  *
  * @arg1: Load balancer to free
  */
-void free_load_balancer(load_balancer *main);
+void free_load_balancer(load_balancer_t *main);
 
 /**
  * load_store() - Stores the key-value pair inside the system.
@@ -40,7 +50,7 @@ void free_load_balancer(load_balancer *main);
  * should be stored and call the function to store the entry on the respective server.
  *
  */
-void loader_store(load_balancer *main, char *key, char *value, int *server_id);
+void loader_store(load_balancer_t *main, char *key, char *value, int *server_id);
 
 /**
  * load_retrieve() - Gets a value associated with the key.
@@ -57,7 +67,7 @@ void loader_store(load_balancer *main, char *key, char *value, int *server_id);
  * Search the hashring associated to the load balancer to find the server where the entry
  * should be stored and call the function to store the entry on the respective server.
  */
-char *loader_retrieve(load_balancer *main, char *key, int *server_id);
+char *loader_retrieve(load_balancer_t *main, char *key, int *server_id);
 
 /**
  * load_add_server() - Adds a new server to the system.
@@ -74,7 +84,7 @@ char *loader_retrieve(load_balancer *main, char *key, int *server_id);
  * Do not forget to resize the hashring and redistribute the objects
  * after each label add (the operations will be done 3 times, for each replica).
  */
-void loader_add_server(load_balancer *main, int server_id);
+void loader_add_server(load_balancer_t *main, int server_id);
 
 /**
  * load_remove_server() - Removes a specific server from the system.
@@ -85,6 +95,6 @@ void loader_add_server(load_balancer *main, int server_id);
  * removed server and will delete ALL replicas from the hash ring.
  *
  */
-void loader_remove_server(load_balancer *main, int server_id);
+void loader_remove_server(load_balancer_t *main, int server_id);
 
 #endif /* LOAD_BALANCER_H_ */

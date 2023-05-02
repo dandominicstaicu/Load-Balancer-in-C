@@ -11,7 +11,7 @@ server_memory_t *init_server_memory()
 
 	srv->hash = 0;
 	srv->id = 0;
-	
+
 	srv->ht = ht_create(HMAX, hash_function_string, compare_function_strings, key_val_free_function);
 
 	return srv;
@@ -53,4 +53,21 @@ void free_server_memory(server_memory_t *server) {
 	ht_free(server->ht);
 
 	free(server);
+}
+
+void server_empty(server_memory_t *src_srv, server_memory_t *dest_srv)
+{
+	for (unsigned int i = 0; i < src_srv->ht->hmax; ++i) {
+		ll_node_t *node = src_srv->ht->buckets[i]->head;
+		while (node) {
+			
+			char *key = ((info *)node->data)->key;
+			char *value = ((info *)node->data)->value;
+
+			server_store(dest_srv, key, value);
+			server_remove(src_srv, key);
+
+			node = node->next;
+		}
+	}
 }

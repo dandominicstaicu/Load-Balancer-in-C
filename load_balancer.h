@@ -8,6 +8,7 @@
 #include "errors.h"
 #include "server.h"
 #include "linked_list.h"
+#include "hash_table.h"
 
 #define POW5 100000
 #define MAX_COPY_CNT 3

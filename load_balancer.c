@@ -45,7 +45,13 @@ void add_one_replica(load_balancer_t *main, int server_id)// server_memory_t *ne
 
 		for (int i = 0; i < main->ring->size; ++i) {
 			server_memory_t *loc_srv = *(server_memory_t **)(node->data);
-			server_memory_t *next_srv = *(server_memory_t **)(node->next->data);
+
+			server_memory_t *next_srv = NULL;
+			//TODO check if next exists, else next is first
+			if (node->next)
+				next_srv = *(server_memory_t **)(node->next->data);
+			else
+				next_srv = *(server_memory_t **)(main->ring->head->data);
 
 			if (new_server->hash > loc_srv->hash && new_server->hash < next_srv->hash) {
 				ll_add_nth_node(main->ring, i + 1, &new_server);
@@ -64,9 +70,9 @@ void add_one_replica(load_balancer_t *main, int server_id)// server_memory_t *ne
 
 	ll_node_t *node = main->ring->head;
 	server_memory_t *loc_srv = *(server_memory_t **)(node->data);
+	server_memory_t *next_srv = NULL;
 
-//for (int i = 0; i < main->ring->size; ++i) {
-	
+
 	while(node) {
 		if (loc_srv->id == server_id) {
 			//rebalance();

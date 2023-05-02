@@ -9,6 +9,9 @@ server_memory_t *init_server_memory()
 	server_memory_t *srv = calloc(1, sizeof(server_memory_t));
 	DIE(!srv, "srv calloc failed in init_server_memory()\n");
 
+	srv->hash = 0;
+	srv->id = 0;
+	
 	srv->ht = ht_create(HMAX, hash_function_string, compare_function_strings, key_val_free_function);
 
 	return srv;
@@ -28,8 +31,7 @@ char *server_retrieve(server_memory_t *server, char *key) {
 		return NULL;
 
 	char *retrieved_data = ht_get(server->ht, key);
-	//(char *)ht_get(server->ht, key);
-
+	
 	return retrieved_data;
 }
 

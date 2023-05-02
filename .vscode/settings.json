@@ -1,5 +1,6 @@
 {
 	"files.associations": {
-		"hash_table.h": "c"
+		"hash_table.h": "c",
+		"load_balancer.h": "c"
 	}
 }

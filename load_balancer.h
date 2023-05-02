@@ -5,8 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "errors.h"
 #include "server.h"
 #include "linked_list.h"
+
+#define POW5 100000
+#define MAX_COPY_CNT 3
 
 struct load_balancer_t;
 typedef struct load_balancer_t load_balancer_t;

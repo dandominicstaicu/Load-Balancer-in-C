@@ -57,17 +57,19 @@ void free_server_memory(server_memory_t *server) {
 
 void server_empty(server_memory_t *src_srv, server_memory_t *dest_srv)
 {
-	for (unsigned int i = 0; i < src_srv->ht->hmax; ++i) {
-		ll_node_t *node = src_srv->ht->buckets[i]->head;
-		while (node) {
-			
-			char *key = ((info *)node->data)->key;
-			char *value = ((info *)node->data)->value;
+    for (unsigned int i = 0; i < src_srv->ht->hmax; ++i) {
+        ll_node_t *node = src_srv->ht->buckets[i]->head;
 
+        while (node) {
+			char *key = ((info *)node->data)->key;
+ 			char *value = ((info *)node->data)->value;
+			
 			server_store(dest_srv, key, value);
-			server_remove(src_srv, key);
 
 			node = node->next;
-		}
-	}
+
+            server_remove(src_srv, key);
+        }
+    }
 }
+

@@ -3,8 +3,10 @@
 #define LOAD_BALANCER_H_
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
+#include "utils.h"
 #include "errors.h"
 #include "server.h"
 #include "linked_list.h"
@@ -101,5 +103,17 @@ void loader_add_server(load_balancer_t *main, int server_id);
  *
  */
 void loader_remove_server(load_balancer_t *main, int server_id);
+
+unsigned int hash_function_servers(void *a);
+
+unsigned int hash_function_key(void *a);
+
+void add_one_replica(load_balancer_t *main, int server_id);
+
+void rebalance(server_memory_t *src_srv, server_memory_t *dest_srv);
+
+void remove_replica(load_balancer_t *main, int server_id);
+
+
 
 #endif /* LOAD_BALANCER_H_ */

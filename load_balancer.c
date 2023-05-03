@@ -43,7 +43,7 @@ void add_one_replica(load_balancer_t *main, int server_id)// server_memory_t *ne
 	} else {
 		ll_node_t *node = main->ring->head;
 
-		for (int i = 0; i < main->ring->size; ++i) {
+		for (unsigned int i = 0; i < main->ring->size; ++i) {
 			server_memory_t *loc_srv = *(server_memory_t **)(node->data);
 
 			server_memory_t *next_srv = NULL;
@@ -69,19 +69,40 @@ void add_one_replica(load_balancer_t *main, int server_id)// server_memory_t *ne
 	}
 
 	ll_node_t *node = main->ring->head;
-	server_memory_t *loc_srv = *(server_memory_t **)(node->data);
-	server_memory_t *next_srv = NULL;
 
+	for (unsigned int i = 0; i < main->ring->size; ++i) {
+		int curr_id = ((server_memory_t *)node->data)->id;
 
-	while(node) {
-		if (loc_srv->id == server_id) {
-			//rebalance();
-			//TODO rebalance
-			break;
+		if (curr_id == server_id) {
+			server_memory_t *src = (server_memory_t *)node->next->data;
+			server_memory_t *dest = (server_memory_t *)node->data;
+
+			rebalance(src, dest);
 		}
 
 		node = node->next;
 	}
+
+	// ll_node_t *node = main->ring->head;
+	// server_memory_t *loc_srv = *(server_memory_t **)(node->data);
+	// server_memory_t *next_srv = *(server_memory_t **)(node->next->data);
+	
+	// while(node) {
+	// 	int current_server_id = ((server_memory_t *)node->data)->id;
+
+	// 	if (current_server_id == server_id) {
+	// 		rebalance(next_srv, loc_srv);
+	// 		break;
+	// 	}
+
+	// 	node = node->next;
+	// 	if (node) {
+	// 		loc_srv = *(server_memory_t **)(node->data);
+
+	// 		if (node->next)
+	// 			next_srv = *(server_memory_t **)(node->next->data);
+	// 	}
+	// }
 }
 
 void rebalance(server_memory_t *src_srv, server_memory_t *dest_srv)
@@ -91,7 +112,7 @@ void rebalance(server_memory_t *src_srv, server_memory_t *dest_srv)
 		return;
 	}
 
-	for (int i = 0; i < src_srv->ht->hmax; ++i) {
+	for (unsigned int i = 0; i < src_srv->ht->hmax; ++i) {
 		ll_node_t *node = src_srv->ht->buckets[i]->head;
 		ll_node_t *current = NULL;
 
@@ -107,7 +128,7 @@ void rebalance(server_memory_t *src_srv, server_memory_t *dest_srv)
 
 			if (dest_srv->hash >= hash_function_key(key)) {
 				ht_put(dest_srv->ht, key, key_len, value, value_len);
-				ht_remove_entry(src_srv, key);
+				ht_remove_entry(src_srv->ht, key);
 			}
 		}
 	}
@@ -133,7 +154,7 @@ void remove_replica(load_balancer_t *main, int server_id)
 	}
 
 	server_memory_t *server = *(server_memory_t **)(node->data);
-	
+
 	node = node->next;
 	if (!node)
 		node = main->ring->head;
@@ -151,12 +172,12 @@ void remove_replica(load_balancer_t *main, int server_id)
 
 void loader_remove_server(load_balancer_t *main, int server_id) {
     for (int i = 0; i < MAX_COPY_CNT; ++i)
-		remove_replica(main, server_id);
+		remove_replica(main, i * POW5 + server_id);
 }
 
 void loader_store(load_balancer_t *main, char *key, char *value, int *server_id) {
     if (!main->ring->head) {
-		NO_SERVER;
+		//NO_SERVER
 		return;
 	}
 
@@ -185,8 +206,8 @@ void loader_store(load_balancer_t *main, char *key, char *value, int *server_id)
 
 char *loader_retrieve(load_balancer_t *main, char *key, int *server_id) {
     if (!main->ring->head) {
-		NO_SERVER;
-		return;
+		//NO_SERVER
+		return NULL;
 	}
 	
 	unsigned int key_hash = hash_function_key(key);

@@ -25,8 +25,12 @@ void ll_add_nth_node(linked_list_t* list, unsigned int n, const void* new_data)
     if (n > list->size)
         n = list->size;
     
-    if (n < 0)
-        return;
+	/*
+		linked_list.c:28:11: warning: comparison of unsigned expression in ‘< 0’ is always false [-Wtype-limits]
+   28 |     if (n < 0)
+	*/
+    // if (n < 0)
+    //     return;
     
     new_node = malloc(sizeof(*new_node));
     new_node -> data = malloc(list -> data_size);

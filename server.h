@@ -3,6 +3,7 @@
 #define SERVER_H_
 
 #include "hash_table.h"
+#include "utils.h"
 
 struct server_memory_t;
 typedef struct server_memory_t server_memory_t;
@@ -56,5 +57,10 @@ void server_remove(server_memory_t *server, char *key);
  *         or NULL (in case the key does not exist).
  */
 char *server_retrieve(server_memory_t *server, char *key);
+
+
+
+void server_empty(server_memory_t *src_srv, server_memory_t *dest_srv);
+
 
 #endif /* SERVER_H_ */

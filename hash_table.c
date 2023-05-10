@@ -1,4 +1,5 @@
 // Copyright 2023 <Dan-Dominic Staicu>
+// Copyright 2023 SD lab
 #include "hash_table.h"
 
 // functions for key comparison

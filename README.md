@@ -2,7 +2,7 @@
 
 ## License
 
-This Homework was written by **Dan-Dominic Staicu** 311CAb
+This Homework was written by **Dan-Dominic Staicu** 311CAb on SD Homework team's skel
 
 ## Homework quote
 
@@ -52,9 +52,34 @@ Each server has 3 replicas on the Hash Ring in order to ensure that objects are 
 
 ## Comments
 
+Unfortunately, until today (10th may 2023) I didn't see the question on the Moodle forum regarding to usage of array to implement the Hash Ring and I'm sorry I didn't check it before;
+
+Nevertheless, I strongly believe that the implementation using Linked Lists makes more sense than using an array;
+
+1. It's a ring; naturally it make's sense to use a linked list / circular linked list in order to graphically represent it;
+
+2. In this checker (maybe even in real scenario) there are just a few servers;
+
+3. Time eficiency is a compromise; even if binary search might be faster in finding the place where a new hash should be inserted/finding a server ID, shifting all the elements from the server and when inserting/removing and calling realloc() for every insertion/removal will be really expensive; accesing memory from an array also takes time (each acces is less than searching in a linked list, but it's also added time)
+
+4. Linked lists are memory efficient; you don't need a continuously memory area; you don't need reallocing every time; even if we'd realloc 2 * current_array_size every time we need new memory slots, that would be memorywise inefficient because it would keep a lot of unused memory at times;
+
+5. You can add as many servers as you want (even with replicas) on a linked list
+
+6. Using a static array of 300000 elements uses more memory for the same result (binary search on 300000 mostly empty elements vs linear search on 300 elements)
+
+7. Linked lists are easy to understand in this scenario
+
+Even if I understand the didactic purpose of using an array and binary search, I still feel like using an array is unnatural and a huge compromise;
+
+
+## Achievements
+
 During this homework I got falimiar with using hash tables, but also using 2 data structures simultaniously, according to the requirements of the given task, where they are efficient;
 
-Also, during this homework I learned about a new method, Consistent Hashing because I had to research it in order to get aa better understanding about it's implementation
+Also, during this homework I learned about a new method, Consistent Hashing because I had to research it in order to get aa better understanding about it's implementation;
+
+I also got more familiar with writing in .md format
 
 ## Bibliography
 

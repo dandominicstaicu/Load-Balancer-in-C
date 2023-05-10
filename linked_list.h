@@ -1,4 +1,5 @@
 // Copyright 2023 <Dan-Dominic Staicu>
+// Copyright 2023 SD lab
 #ifndef LINKED_LIST_H_
 #define LINKED_LIST_H_
 

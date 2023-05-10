@@ -1,4 +1,5 @@
-/* Copyright 2023 <> */
+// Copyright 2023 <Dan-Dominic Staicu>
+// Copyright SD Homework team
 #ifndef SERVER_H_
 #define SERVER_H_
 

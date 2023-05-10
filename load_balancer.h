@@ -1,4 +1,5 @@
-/* Copyright 2023 <> */
+// Copyright 2023 <Dan-Dominic Staicu>
+// Copyright 2023 SD lab
 #ifndef LOAD_BALANCER_H_
 #define LOAD_BALANCER_H_
 
@@ -108,16 +109,7 @@ unsigned int hash_function_key(void *a);
 
 void add_one_replica(load_balancer_t *main, int server_id);
 
-void rebalance(server_memory_t *src_srv, server_memory_t *dest_srv);
-
 void remove_replica(load_balancer_t *main, int server_id);
-
-void server_rebalance(server_memory_t *server, server_memory_t *next_server,
-                      int type, unsigned int (* hash_key)(void *));
-
-
-void loader_add_copy(load_balancer_t *main, int server_id);
-
 
 
 #endif /* LOAD_BALANCER_H_ */

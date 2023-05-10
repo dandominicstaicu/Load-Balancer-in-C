@@ -1,3 +1,5 @@
+# Copyright 2023 SD Homework team
+# Copyright 2023 Dan-Dominic Staicu 311CA
 CC=gcc
 CFLAGS=-std=c99 -Wall -Wextra -g
 LOAD=load_balancer

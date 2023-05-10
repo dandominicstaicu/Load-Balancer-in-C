@@ -1,4 +1,4 @@
-/* Copyright 2023 <> */
+// Copyright 2023 SD Homework team
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

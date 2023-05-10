@@ -1,4 +1,5 @@
 // Copyright 2023 <Dan-Dominic Staicu>
+// Copyright 2023 SD lab
 #include "linked_list.h"
 
 // create a new list and init it

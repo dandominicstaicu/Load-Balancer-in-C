@@ -1,4 +1,5 @@
 // Copyright 2023 <Dan-Dominic Staicu>
+// Copyright 2023 SD lab
 #ifndef HASH_TABLE_H_
 #define HASH_TABLE_H_
 

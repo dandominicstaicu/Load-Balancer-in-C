@@ -1,4 +1,5 @@
 // Copyright 2023 <Dan-Dominic Staicu>
+// Copyright 2023 SD Homework team
 #ifndef UTILS_H_
 #define UTILS_H_
 

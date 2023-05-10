@@ -1,16 +1,19 @@
-#ifndef _LINKED_LIST_H_
-#define _LINKED_LIST_H_
+// Copyright 2023 <Dan-Dominic Staicu>
+#ifndef LINKED_LIST_H_
+#define LINKED_LIST_H_
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "utils.h"
 
 typedef struct ll_node_t
 {
     void* data;
     struct ll_node_t* next;
 } ll_node_t;
- 
+
 typedef struct linked_list_t
 {
     ll_node_t* head;
@@ -32,4 +35,4 @@ void ll_print_int(linked_list_t* list);
 
 void ll_print_string(linked_list_t *list);
 
-#endif
+#endif  // LINKED_LIST_H_

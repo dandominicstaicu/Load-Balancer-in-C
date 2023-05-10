@@ -29,3 +29,6 @@ $(LL).o: $(LL).c $(LL).h
 
 clean:
 	rm -f *.o tema2 *.h.gch
+
+pack:
+	zip -FSr 311CA_StaicuDan-Dominic_Tema2	.zip README.md Makefile *.c *.h

@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "utils.h"
-#include "errors.h"
 #include "server.h"
 #include "linked_list.h"
 #include "hash_table.h"
@@ -20,8 +19,6 @@ typedef struct load_balancer_t load_balancer_t;
 
 struct load_balancer_t {
     linked_list_t *ring;
-	unsigned int (* server_hash)(void *);
-	unsigned int (* key_hash)(void *);
 };
 
 /**
@@ -57,7 +54,8 @@ void free_load_balancer(load_balancer_t *main);
  * should be stored and call the function to store the entry on the respective server.
  *
  */
-void loader_store(load_balancer_t *main, char *key, char *value, int *server_id);
+void loader_store(load_balancer_t *main, char *key, char *value,
+				  int *server_id);
 
 /**
  * load_retrieve() - Gets a value associated with the key.
@@ -113,6 +111,12 @@ void add_one_replica(load_balancer_t *main, int server_id);
 void rebalance(server_memory_t *src_srv, server_memory_t *dest_srv);
 
 void remove_replica(load_balancer_t *main, int server_id);
+
+void server_rebalance(server_memory_t *server, server_memory_t *next_server,
+                      int type, unsigned int (* hash_key)(void *));
+
+
+void loader_add_copy(load_balancer_t *main, int server_id);
 
 
 

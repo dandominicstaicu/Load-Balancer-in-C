@@ -1,4 +1,4 @@
-/* Copyright 2023 <> */
+// Copyright 2023 <Dan-Dominic Staicu>
 #include "load_balancer.h"
 
 unsigned int hash_function_servers(void *a) {
@@ -15,137 +15,165 @@ unsigned int hash_function_key(void *a) {
     unsigned int hash = 5381;
     int c;
 
-    while ((c = *puchar_a++))
+	while ((c = *puchar_a++))
         hash = ((hash << 5u) + hash) + c;
 
     return hash;
 }
 
+// initializes a new load balancer and returns a pointer to the new load_bal
 load_balancer_t *init_load_balancer() {
+	// alloc mem for load balancer
     load_balancer_t *ld_bal = calloc(1, sizeof(load_balancer_t));
 	DIE(!ld_bal, "calloc of load balancer failed in init_load_balancer\n");
 
+	// create a ll to hold server_memory_t* items
 	ld_bal->ring = ll_create(sizeof(server_memory_t *));
-	ld_bal->server_hash = hash_function_servers;
-	ld_bal->key_hash = hash_function_key;
 
     return ld_bal;
 }
 
-void add_one_replica(load_balancer_t *main, int server_id)// server_memory_t *new_srv_mem)
+// add a new replica of a given server in the ring
+void add_one_replica(load_balancer_t *main, int server_id)
 {
-	server_memory_t *new_server = init_server_memory();
-	new_server->hash = hash_function_servers(&server_id);
-	new_server->id = server_id;
+	// allocate mem for the new server and initialize it
+    server_memory_t *srv = init_server_memory();
+	srv->hash = hash_function_servers(&server_id);
+    srv->id = server_id;
 
-	if (!main->ring->size) {
-		ll_add_nth_node(main->ring, 0, &new_server); // TODO MACRO 0
-	} else {
-		ll_node_t *node = main->ring->head;
+    // interclass the new server in the sorted list of servers
+	int count = 0;
+    ll_node_t *node = main->ring->head;
 
-		for (unsigned int i = 0; i < main->ring->size; ++i) {
-			server_memory_t *loc_srv = *(server_memory_t **)(node->data);
+    while (node) {
+		server_memory_t **ptr = (server_memory_t **)node->data;
+		server_memory_t *curr_server = *ptr;
 
-			server_memory_t *next_srv = NULL;
-			//TODO check if next exists, else next is first
-			if (node->next)
-				next_srv = *(server_memory_t **)(node->next->data);
-			else
-				next_srv = *(server_memory_t **)(main->ring->head->data);
+        if (srv->hash < curr_server->hash) {
+            ll_add_nth_node(main->ring, count, &srv);
+            break;
+        }
 
-			if (new_server->hash > loc_srv->hash && new_server->hash < next_srv->hash) {
-				ll_add_nth_node(main->ring, i + 1, &new_server);
-				break;				
-			} else if (new_server->hash > loc_srv->hash && i == main->ring->size - 1) {
-				ll_add_nth_node(main->ring, main->ring->size, &new_server);
-				break;
-			} else if (new_server->hash < loc_srv->hash) {
-				ll_add_nth_node(main->ring, 0, &new_server); //TODO MACRO 0
-				break;
-			}
+        node = node->next;
+		++count;
+    }
 
-			node = node->next;
-		}
-	}
+	// if not found, add at the end a new server
+    if (!node)
+        ll_add_nth_node(main->ring, main->ring->size, &srv);
 
-	ll_node_t *node = main->ring->head;
+	// check if the number of servers in the hashring is greater than 1 (3 reps)
+    // than, rebalance the data
+    if (main->ring->size <= MAX_COPY_CNT)
+        return;
 
-	for (unsigned int i = 0; i < main->ring->size; ++i) {
-		int curr_id = ((server_memory_t *)node->data)->id;
+    node = main->ring->head;
 
-		if (curr_id == server_id) {
-			server_memory_t *src = (server_memory_t *)node->next->data;
-			server_memory_t *dest = (server_memory_t *)node->data;
+    while (node) {
+		server_memory_t **ptr = (server_memory_t **)node->data;
+		server_memory_t *curr_server = *ptr;
 
-			rebalance(src, dest);
-		}
+        if (srv->id == curr_server->id)
+            break;
 
-		node = node->next;
-	}
+        node = node->next;
+    }
 
-	// ll_node_t *node = main->ring->head;
-	// server_memory_t *loc_srv = *(server_memory_t **)(node->data);
-	// server_memory_t *next_srv = *(server_memory_t **)(node->next->data);
-	
-	// while(node) {
-	// 	int current_server_id = ((server_memory_t *)node->data)->id;
+    ll_node_t *next = node->next;
+    if (!next)
+        next = main->ring->head;
 
-	// 	if (current_server_id == server_id) {
-	// 		rebalance(next_srv, loc_srv);
-	// 		break;
-	// 	}
+    // get the server that comes after the new server in the sorted list
+	server_memory_t **ptr = (server_memory_t **)next->data;
+	server_memory_t *next_server = *ptr;
 
-	// 	node = node->next;
-	// 	if (node) {
-	// 		loc_srv = *(server_memory_t **)(node->data);
+    // get the case of server positioning and rebalance acordingly
+	// depending on the position of the new server and it's next, move data
+	// from the next server to the new server in order to "balance the load"
+    if (count == 0) {
+		// if the new server is the first, move data from the last server to it
+		for (unsigned int i = 0; i < next_server->ht->hmax; ++i) {
+            ll_node_t *node = next_server->ht->buckets[i]->head;
 
-	// 		if (node->next)
-	// 			next_srv = *(server_memory_t **)(node->next->data);
-	// 	}
-	// }
+		   	// Iterate the ht of the next server to check for key-value pairs
+			// that should be moved to the new server
+            while (node) {
+                char *key = (char *)((info_t *)node->data)->key;
+                char *value = (char *)((info_t *)node->data)->value;
+                unsigned int hash = hash_function_key(key);
+
+				// the key-value pair should be moved to the new server
+                if (next_server->hash < hash || srv->hash >= hash) {
+                    server_store(srv, key, value);
+                    node = node->next;
+                    server_remove(next_server, key);
+                    continue;
+                }
+                node = node->next;
+            }
+        }
+    } else if (next == main->ring->head) {
+		// if the new srv is the last one in the ring
+		// move data from the first to the last
+		for (unsigned int i = 0; i < next_server->ht->hmax; ++i) {
+            ll_node_t *node = next_server->ht->buckets[i]->head;
+
+			while (node) {
+                char *key = (char *)((info_t *)node->data)->key;
+                char *value = (char *)((info_t *)node->data)->value;
+                unsigned int hash = hash_function_key(key);
+
+				if (hash <= srv->hash && hash > next_server->hash) {
+                    server_store(srv, key, value);
+                    node = node->next;
+                    server_remove(next_server, key);
+                    continue;
+                }
+
+                node = node->next;
+            }
+        }
+    } else {
+		// the new server is between two servers in the ring
+		for (unsigned int i = 0; i < next_server->ht->hmax; ++i) {
+            ll_node_t *node = next_server->ht->buckets[i]->head;
+
+		    while (node) {
+                char *key = (char *)((info_t *)node->data)->key;
+                char *value = (char *)((info_t *)node->data)->value;
+                unsigned int hash = hash_function_key(key);
+
+				if (srv->hash >= hash) {
+                    server_store(srv, key, value);
+                    node = node->next;
+                    server_remove(next_server, key);
+                    continue;
+                }
+
+                node = node->next;
+            }
+        }
+    }
 }
 
-void rebalance(server_memory_t *src_srv, server_memory_t *dest_srv)
-{
-	if (!src_srv || !dest_srv) {
-		//TODO macro error
-		return;
-	}
-
-	for (unsigned int i = 0; i < src_srv->ht->hmax; ++i) {
-		ll_node_t *node = src_srv->ht->buckets[i]->head;
-		ll_node_t *current = NULL;
-
-		int size = src_srv->ht->buckets[i]->size;
-		for (int j = 0; j < size; ++j) {
-			current = node;
-			node = node->next;
-
-			char *key = ((info *)current->data)->key;
-			char *value = ((info *)current->data)->value;
-			unsigned int key_len = strlen(key) + 1;
-			unsigned int value_len = strlen(value) + 1;
-
-			if (dest_srv->hash >= hash_function_key(key)) {
-				ht_put(dest_srv->ht, key, key_len, value, value_len);
-				ht_remove_entry(src_srv->ht, key);
-			}
-		}
-	}
+// add a new server by adding multiple replicas of the server
+void loader_add_server(load_balancer_t* main, int server_id) {
+	for (int i = 0; i < MAX_COPY_CNT; ++i)
+        add_one_replica(main, i * POW5 + server_id);
 }
 
-void loader_add_server(load_balancer_t *main, int server_id) {
-    for (int i = 0; i <= MAX_COPY_CNT; ++i)
-		add_one_replica(main, i * POW5 + server_id);
-}
-
+// remove a replica of the server from the hash ring
 void remove_replica(load_balancer_t *main, int server_id)
 {
 	ll_node_t *node = main->ring->head;
 	int cnt = 0;
 
+	// iterate through all the servers to find the node of the server to rmv
 	while (node) {
-		server_memory_t *server = *(server_memory_t **)(node->data);
+		server_memory_t **ptr = (server_memory_t **)node->data;
+		server_memory_t *server = *ptr;
+
+		// stop when the id is matched
 		if (server->id == server_id)
 			break;
 
@@ -153,16 +181,23 @@ void remove_replica(load_balancer_t *main, int server_id)
 		node = node->next;
 	}
 
-	server_memory_t *server = *(server_memory_t **)(node->data);
+	// get the server from data
+	server_memory_t **ptr = (server_memory_t **)node->data;
+	server_memory_t *server = *ptr;
 
+	// get the next server
 	node = node->next;
+	// if last, the next is first
 	if (!node)
 		node = main->ring->head;
 
-	server_memory_t *next_srv = *(server_memory_t **)(node->data);
+	ptr = (server_memory_t **)node->data;
+	server_memory_t *next_srv = *ptr;
 
+	// move all data from the server to remove to the next server
 	server_empty(server, next_srv);
 
+	// remove the server node from the hashring and free the server memory
 	ll_node_t *rmv = ll_remove_nth_node(main->ring, cnt);
 
 	free_server_memory(server);
@@ -170,25 +205,34 @@ void remove_replica(load_balancer_t *main, int server_id)
 	free(rmv);
 }
 
+// remove a server from the load balancer by removing all of its replicas
 void loader_remove_server(load_balancer_t *main, int server_id) {
     for (int i = 0; i < MAX_COPY_CNT; ++i)
 		remove_replica(main, i * POW5 + server_id);
 }
 
-void loader_store(load_balancer_t *main, char *key, char *value, int *server_id) {
-    if (!main->ring->head) {
-		//NO_SERVER
+// stores a key-value pair in the correct server
+// also returns the server id where the key-value pair is stored
+void loader_store(load_balancer_t *main, char *key, char *value,
+				  int *server_id) {
+	// check if there is at least one server available
+	if (!main->ring->head) {
+		ERROR("no server available\n");
 		return;
 	}
 
 	ll_node_t *node = main->ring->head;
 
+	// create the hash of the key
 	unsigned int key_hash = hash_function_key(key);
 
+	// iterate through all the servers in order to find an appropriate one
 	while (node) {
-		server_memory_t *srv = *(server_memory_t **)(node->data);
+		server_memory_t **ptr = (server_memory_t **)node->data;
+		server_memory_t *srv = *ptr;
 
-		if (key_hash <= srv->hash) {
+		// if found, store the key-value pair in the server and return its id
+		if (srv->hash >= key_hash) {
 			server_store(srv, key, value);
 			*server_id = srv->id % POW5;
 			return;
@@ -197,61 +241,86 @@ void loader_store(load_balancer_t *main, char *key, char *value, int *server_id)
 		node = node->next;
 	}
 
+	// If the hash is greater than the highest server hash, store the pair in
+	// the first server of the hashring
+
 	node = main->ring->head;
-	server_memory_t *srv = *(server_memory_t **)(node->data);
+
+	server_memory_t **ptr = (server_memory_t **)node->data;
+	server_memory_t *srv = *ptr;
 
 	server_store(srv, key, value);
 	*server_id = srv->id % POW5;
 }
 
+// retrieves a value from a server by its key
 char *loader_retrieve(load_balancer_t *main, char *key, int *server_id) {
     if (!main->ring->head) {
-		//NO_SERVER
+		ERROR("no server found");
 		return NULL;
 	}
-	
+
+	// get the hash of the key
 	unsigned int key_hash = hash_function_key(key);
 
+
+	// iterate through the servers in the hashring
 	ll_node_t *node = main->ring->head;
 
-	while(node) {
-		server_memory_t *srv = *(server_memory_t **)node->data;
+	while (node) {
+		server_memory_t **ptr = (server_memory_t **)node->data;
+		server_memory_t *srv = *ptr;
 
-		if (key_hash <= srv->hash) {
+		// if the key hash is less than or equal to this server's hash,
+		// use this server to retrieve the value
+		if (srv->hash >= key_hash) {
 			*server_id = srv->id % POW5;
-			return server_retrieve(srv, key);
+
+			char *retrieved_data = server_retrieve(srv, key);
+			return retrieved_data;
 		}
 
 		node = node->next;
 	}
 
-
+	// if no server was found, use the first from the hashring
     node = main->ring->head;
-	server_memory_t *srv = *(server_memory_t **)(node->data);
+
+	server_memory_t **ptr = (server_memory_t **)node->data;
+	server_memory_t *srv = *ptr;
 
 	*server_id = srv->id % POW5;
 
-	return server_retrieve(srv, key);
+	char *retrieved_data = server_retrieve(srv, key);
+	return retrieved_data;
 }
 
+// frees all the memory used by the load balancer and it's servers
 void free_load_balancer(load_balancer_t *main) {
-    if (!main)
-	//TODO macro error
+    if (!main) {
+		ERROR("main is NULL");
 		return;
+	}
 
-	if (!main->ring)
-	//TODO macro error
+	if (!main->ring) {
+		ERROR("ring is NULL");
+
+		free(main);
 		return;
+	}
 
 	ll_node_t *node = main->ring->head;
 
+	// iterate through all the servers and free them one by one
 	while (node) {
-		server_memory_t *srv = *(server_memory_t **)(node->data);
+		server_memory_t **ptr = (server_memory_t **)node->data;
+		server_memory_t *srv = *ptr;
 		free_server_memory(srv);
 
 		node = node->next;
 	}
 
+	// free the pointers
 	ll_free(&main->ring);
 	free(main);
 }

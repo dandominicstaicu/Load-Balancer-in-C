@@ -1,5 +1,6 @@
-#ifndef _HASH_TABLE_H_
-#define _HASH_TABLE_H_
+// Copyright 2023 <Dan-Dominic Staicu>
+#ifndef HASH_TABLE_H_
+#define HASH_TABLE_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,28 +8,27 @@
 
 #include "linked_list.h"
 
-#define HMAX 10
-#define MAX_STRING_SIZE 256 //??
+#define HMAX 30
 
-typedef struct info info;
-struct info {
+typedef struct info_t info_t;
+struct info_t {
 	void *key;
 	void *value;
 };
 
 typedef struct hashtable_t hashtable_t;
 struct hashtable_t {
-	linked_list_t **buckets; /* Array de liste simplu-inlantuite. */
-	/* Nr. total de noduri existente curent in toate bucket-urile. */
+	// array of linked lists
+	linked_list_t **buckets;
+	// total number of nodes existing in all the buckets
 	unsigned int size;
-	unsigned int hmax; /* Nr. de bucket-uri. */
-	/* (Pointer la) Functie pentru a calcula valoarea hash asociata cheilor.
-	 */
+	// no buckets
+	unsigned int hmax;
+	// pointer to the hash value computing function
 	unsigned int (*hash_function)(void *);
-	/* (Pointer la) Functie pentru a compara doua chei. */
+	// pointer to key comparison function
 	int (*compare_function)(void *, void *);
-	/* (Pointer la) Functie pentru a elibera memoria ocupata de cheie si
-	 * valoare. */
+	/// pointer to the free key and value function
 	void (*key_val_free_function)(void *);
 };
 
@@ -61,5 +61,4 @@ unsigned int ht_get_size(hashtable_t *ht);
 
 unsigned int ht_get_hmax(hashtable_t *ht);
 
-
-#endif
+#endif  // HASH_TABLE_H_
